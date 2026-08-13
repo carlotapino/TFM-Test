@@ -1,0 +1,15 @@
+name: Primera pipeline
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hola món
+        run: echo "La pipeline funciona!"
+      - name: Llista fitxers
+        run: ls -la
