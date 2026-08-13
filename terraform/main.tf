@@ -7,5 +7,6 @@ output "environment" {
 }
 
 resource "example" "test" {
-  cidr = "0.0.0.0/0"
+  passwd = "SuperSecret123"
+  cidr   = "0.0.0.0/0"
 }

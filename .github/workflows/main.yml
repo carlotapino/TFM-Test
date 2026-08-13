@@ -19,3 +19,6 @@ jobs:
 
       - name: Run security scanner
         run: python scanner/scanner.py
+
+      - name: Run secrets scanner
+        run: python scanner/secrets.py
