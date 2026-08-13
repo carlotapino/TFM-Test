@@ -19,7 +19,8 @@ jobs:
 
       - name: Run security scanner
         run: python scanner/scanner.py
-        continue-on-error: true
 
-      - name: Run secrets scanner
-        run: python scanner/secrets.py
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
