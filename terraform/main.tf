@@ -9,4 +9,5 @@ output "environment" {
 resource "example" "test" {
   passwd = "SuperSecret123"
   cidr   = "0.0.0.0/0"
+  KEY    = "1243refefespffodm"
 }
