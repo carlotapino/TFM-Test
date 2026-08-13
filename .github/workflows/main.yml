@@ -17,10 +17,14 @@ jobs:
       - name: Show Terraform files
         run: find . -name "*.tf"
 
+      - name: Install Gitleaks
+        run: |
+          wget https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz
+          tar -xzf gitleaks_8.24.3_linux_x64.tar.gz
+          chmod +x gitleaks
+
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gitleaks dir . --redact --verbose
 
       - name: Run security scanner
         run: python scanner/scanner.py
