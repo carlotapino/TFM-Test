@@ -17,6 +17,19 @@ jobs:
       - name: Show Terraform files
         run: find . -name "*.tf"
 
+      - name: Build an image from Dockerfile
+        run: docker build -t docker.io/my-organization/my-app:${{ github.sha }} .
+        
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: 'docker.io/my-organization/my-app:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+      
       - name: Install Gitleaks
         run: |
           wget https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz
