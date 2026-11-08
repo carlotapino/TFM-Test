@@ -19,7 +19,7 @@ jobs:
           TRIVY_DEBUG: 'true'
         with:
           scan-type: config
-          scan-ref: '.'
+          scan-ref: terraform
           format: table
           
           
