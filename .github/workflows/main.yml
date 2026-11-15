@@ -37,4 +37,12 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: 1
 
-  
+  opa:
+    runs-on: ubuntu-latest
+    container: openpolicyagent/conftest:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Conftest vamos
+        run: conftest test -o github -p policy terraform 
