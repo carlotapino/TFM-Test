@@ -90,3 +90,6 @@ jobs:
 
       - name: Conftest vamos
         run: conftest test -o github -p policy terraform 
+
+
+        # https://safeguard.sh/resources/blog/github-secret-scanning-vs-dedicated-scanning-tools
