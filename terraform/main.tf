@@ -1,15 +1,13 @@
-variable "environment" {
-  default = "dev"
+provider "aws" {
+  region     = "us-east-1"
+  access_key = "AKIAIOSFODNN7EXAMPLE"
+  secret_key = "WD97W9JWF09JS0/&98dfpw$)PFOUIG9(J0)"
 }
 
-output "environment" {
-  value = var.environment
-}
-
-resource "example" "test" {
-  passwd = "SuperSecret123"
-  cidr   = "0.0.0.0/0"
-  KEY    = "1243refefespffodm"
+resource "aws_security_group" "test" {
+  name        = "test"
+  description = "Test security group"
+  #vpc_id      = aws_vpc.vpc.id
 
   ingress {
     from_port   = 22
