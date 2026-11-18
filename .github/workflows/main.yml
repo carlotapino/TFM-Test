@@ -85,6 +85,14 @@ jobs:
     runs-on: ubuntu-latest
     container: openpolicyagent/conftest:latest
     steps:
+      - name: Diagnóstico de Conftest
+        run: |
+          echo "=== Cómo interpreta Conftest el fichero ==="
+          conftest parse terraform/main.tf
+          echo "=== Contenido de policy/ ==="
+          ls -la policy/
+          echo "=== Reglas que mencionan propietari ==="
+          grep -rn "propietari" policy/
       - name: Checkout repository
         uses: actions/checkout@v4
 
