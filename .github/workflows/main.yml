@@ -81,7 +81,7 @@ jobs:
           exit-code: 1
 
   opa:
-    needs: [p3-checkov-static-scanning, p3-trivy-static-scanning]
+    needs: p3-trivy-static-scanning
     runs-on: ubuntu-latest
     container: openpolicyagent/conftest:latest
     steps:
