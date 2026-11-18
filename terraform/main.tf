@@ -53,7 +53,7 @@ resource "aws_s3_bucket" "example" {
   bucket = "mi-bucket-de-prueba-12345"
 
   tags = {
-    owner = "mi-nombre-de-usuario"
+    Owner = "mi-nombre-de-usuario"
   }
 }
 
@@ -124,7 +124,7 @@ resource "aws_s3_bucket" "logs" {
   #trivy:ignore:AVD-AWS-0132
   bucket = "mi-bucket-de-prueba-12345-logs"
   tags = {
-    owner = "mi-nombre-de-usuario"
+    Owner = "mi-nombre-de-usuario"
   }
 }
 
