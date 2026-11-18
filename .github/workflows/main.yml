@@ -123,58 +123,88 @@ jobs:
       - name: Conftest vamos
         run: conftest test -o github -p policy terraform 
 
-  p3-informe-supresiones:
+  report:
     needs: [p2-validate]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Instalar Checkov
         run: pip install checkov
 
-      - name: Checkov en JSON (incluye skipped_checks)
+      - name: Run Checkov (JSON, never blocks)
         run: checkov -d terraform --framework terraform --output json --soft-fail > checkov-full.json
 
-      - name: Generar informe de supresiones
-        run: |
-          {
-            echo "## 🔍 Supresiones para revisión humana"
-            echo ""
-            echo "Estos checks **no se han evaluado** porque alguien los ha saltado en el código."
-            echo "Revisa que cada justificación sea válida antes de aprobar."
-            echo ""
-            echo "### Checkov (skipped_checks)"
-            echo ""
-            echo "| Check | Recurso | Fichero | Justificación |"
-            echo "|---|---|---|---|"
-            jq -r '.results.skipped_checks[]? | "| \(.check_id) | \(.resource) | \(.file_path) | \(.check_result.suppress_comment // "SIN JUSTIFICACIÓN") |"' checkov-full.json
-            echo ""
-            echo "### Todas las supresiones del código (Checkov y Trivy)"
-            echo ""
-            echo '```'
-            grep -rn -B1 -E "#(checkov:skip|trivy:ignore)" terraform/ || echo "Ninguna"
-            echo '```'
-          } | tee supresiones.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Prueba de --show-suppressed en Trivy (experimental)
-        continue-on-error: true
+      - name: Run Trivy (JSON, never blocks)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: config
           scan-ref: terraform
-          format: table
+          format: json
+          output: trivy.json
           exit-code: 0
-          trivy-config: ""
-        env:
-          TRIVY_SHOW_SUPPRESSED: "true"
+
+      - name: Run Conftest (JSON, never blocks)
+        run: |
+          docker run --rm -v "$PWD":/project -w /project openpolicyagent/conftest \
+            test -p policy terraform --output json > conftest.json || true
+
+      - name: Generate review report
+        run: |
+          {
+            echo "Security report"
+            
+            echo "## 1. Findings (failed checks)"
+            echo ""
+            echo "### Checkov"
+            echo ""
+            echo "Passed: $(jq '.summary.passed' checkov-full.json) | Failed: $(jq '.summary.failed' checkov-full.json) | Skipped: $(jq '.summary.skipped' checkov-full.json)"
+            echo ""
+            echo "| Check | Description | Resource | Location |"
+            echo "|---|---|---|---|"
+            jq -r '.results.failed_checks[]? | "| \(.check_id) | \(.check_name) | \(.resource) | \(.file_path):\(.file_line_range[0]) |"' checkov-full.json
+            echo ""
+
+            echo "### Trivy"
+            echo ""
+            echo "| ID | Severity | Description | Location |"
+            echo "|---|---|---|---|"
+            jq -r '.Results[]? | .Target as $t | .Misconfigurations[]? | "| \(.ID) | \(.Severity) | \(.Title) | \($t):\(.CauseMetadata.StartLine // "?") |"' trivy.json
+            echo ""
+
+            echo "Policies"
+            echo ""
+            echo "| Type | Message |"
+            echo "|---|---|"
+            jq -r '.[]? | (.failures[]? | "| FAIL | \(.msg) |"), (.warnings[]? | "| WARN | \(.msg) |")' conftest.json
+            echo ""
+
+            echo "## 2. Suppressions "
+            echo ""
+            echo "Verify that each justification is valid before approving."
+            echo ""
+            echo "### Checkov"
+            echo ""
+            echo "| Check | Resource | File | Justification |"
+            echo "|---|---|---|---|"
+            jq -r '.results.skipped_checks[]? | "| \(.check_id) | \(.resource) | \(.file_path) | \(.check_result.suppress_comment // "NO JUSTIFICATION") |"' checkov-full.json
+            echo ""
+            echo "### All suppressions in the code (Checkov and Trivy)"
+            echo ""
+            echo '```'
+            grep -rn -B1 -E "#(checkov:skip|trivy:ignore)" terraform/ || echo "None"
+            echo '```'
+          } | tee review-report.md >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: informe-supresiones
+          name: review-report
           path: |
-            supresiones.md
+            review-report.md
             checkov-full.json
-
+            trivy.json
+            conftest.json
 
         # https://safeguard.sh/resources/blog/github-secret-scanning-vs-dedicated-scanning-tools
