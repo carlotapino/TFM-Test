@@ -18,7 +18,7 @@ resource "aws_security_group" "test" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["10.0.1.0/24"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
@@ -120,7 +120,7 @@ resource "aws_s3_bucket" "logs" {
   #checkov:skip=CKV_AWS_144:Replicación entre regiones no necesaria en entorno de pruebas
   #checkov:skip=CKV2_AWS_62:Notificaciones de eventos no necesarias en entorno de pruebas
   #checkov:skip=CKV_AWS_145:Los logs de acceso de S3 solo admiten cifrado SSE-S3 (AES256), no KMS
-  #trivy:ignore:AVD-AWS-0089
+  #trivy:ignore:AVD-AWS-0089: bucket de destino de logs, no se registra a sí mismo
   #trivy:ignore:AVD-AWS-0132
   bucket = "mi-bucket-de-prueba-12345-logs"
   tags = {

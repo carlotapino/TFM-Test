@@ -123,5 +123,58 @@ jobs:
       - name: Conftest vamos
         run: conftest test -o github -p policy terraform 
 
+  p3-informe-supresiones:
+    needs: [p2-validate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Checkov
+        run: pip install checkov
+
+      - name: Checkov en JSON (incluye skipped_checks)
+        run: checkov -d terraform --framework terraform --output json --soft-fail > checkov-full.json
+
+      - name: Generar informe de supresiones
+        run: |
+          {
+            echo "## 🔍 Supresiones para revisión humana"
+            echo ""
+            echo "Estos checks **no se han evaluado** porque alguien los ha saltado en el código."
+            echo "Revisa que cada justificación sea válida antes de aprobar."
+            echo ""
+            echo "### Checkov (skipped_checks)"
+            echo ""
+            echo "| Check | Recurso | Fichero | Justificación |"
+            echo "|---|---|---|---|"
+            jq -r '.results.skipped_checks[]? | "| \(.check_id) | \(.resource) | \(.file_path) | \(.check_result.suppress_comment // "SIN JUSTIFICACIÓN") |"' checkov-full.json
+            echo ""
+            echo "### Todas las supresiones del código (Checkov y Trivy)"
+            echo ""
+            echo '```'
+            grep -rn -B1 -E "#(checkov:skip|trivy:ignore)" terraform/ || echo "Ninguna"
+            echo '```'
+          } | tee supresiones.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prueba de --show-suppressed en Trivy (experimental)
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: terraform
+          format: table
+          exit-code: 0
+          trivy-config: ""
+        env:
+          TRIVY_SHOW_SUPPRESSED: "true"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: informe-supresiones
+          path: |
+            supresiones.md
+            checkov-full.json
+
 
         # https://safeguard.sh/resources/blog/github-secret-scanning-vs-dedicated-scanning-tools
