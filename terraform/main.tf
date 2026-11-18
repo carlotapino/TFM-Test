@@ -18,6 +18,9 @@ resource "aws_security_group" "test" {
 
 resource "aws_s3_bucket" "example" {
   bucket = "mi-bucket-de-prueba-12345"
+  tags = {
+    Owner = "mi-nombre-de-usuario"
+  }
 }
 
 data "aws_caller_identity" "current" {}
