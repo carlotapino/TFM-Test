@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
   
+permissions:
+  contents: read
+  pull-requests: write  
 
 jobs:
   p1-checkov-secret-detection:
@@ -33,7 +36,6 @@ jobs:
           scan-ref: terraform
           scanners: secret
           format: table
-          #severity: CRITICAL,HIGH
           exit-code: 1
 
   p2-validate:
@@ -58,6 +60,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Checkov report
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: terraform
+          framework: terraform
+          soft_fail: true
+          output_format: sarif
+          output_file_path: checkov.sarif
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: informe-checkov
+          path: checkov.sarif
       - name: checkov vamos
         uses: bridgecrewio/checkov-action@v12
         with:
@@ -69,9 +85,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v44
 
-      - name: trivy vamos
+      - name: Trivy report
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: terraform
+          format: json
+          output: trivy.json
+          exit-code: 0
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: informe-trivy
+          path: trivy.json
+
+      - name: Trivy fail (CRITICAL/HIGH)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: config
@@ -80,6 +111,7 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: 1
 
+
   opa:
     needs: p3-trivy-static-scanning
     runs-on: ubuntu-latest
@@ -87,14 +119,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Diagnóstico de Conftest
-        run: |
-          echo "=== Cómo interpreta Conftest el fichero ==="
-          conftest parse terraform/main.tf
-          echo "=== Contenido de policy/ ==="
-          ls -la policy/
-          echo "=== Reglas que mencionan propietari ==="
-          grep -rn "propietari" policy/
       
       - name: Conftest vamos
         run: conftest test -o github -p policy terraform 
