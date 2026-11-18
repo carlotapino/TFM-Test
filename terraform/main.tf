@@ -18,6 +18,21 @@ resource "aws_security_group" "test" {
 
 }
 
-resource "aws_s3_bucket" "bucket" {
-  bucket = "bucket-prova"
+resource "aws_s3_bucket_public_access_block" "good_example" {
+  bucket                  = aws_s3_bucket.example.id
+  block_public_policy     = true
+  block_public_acls       = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "example" {
+  bucket = aws_s3_bucket.good_example.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.mykey.arn
+      sse_algorithm     = "aws:kms"
+    }
+  }
 }
