@@ -53,7 +53,7 @@ resource "aws_s3_bucket" "example" {
   bucket = "mi-bucket-de-prueba-12345"
 
   tags = {
-    Owner = "mi-nombre-de-usuario"
+    owner = "mi-nombre-de-usuario"
   }
 }
 
@@ -109,6 +109,7 @@ resource "aws_s3_bucket_logging" "example" {
   bucket        = aws_s3_bucket.example.id
   target_bucket = aws_s3_bucket.logs.id
   target_prefix = "log/"
+
 }
 
 # ---------------------------------------------------------------
@@ -122,6 +123,9 @@ resource "aws_s3_bucket" "logs" {
   #trivy:ignore:AVD-AWS-0089
   #trivy:ignore:AVD-AWS-0132
   bucket = "mi-bucket-de-prueba-12345-logs"
+  tags = {
+    owner = "mi-nombre-de-usuario"
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "logs" {
@@ -130,6 +134,7 @@ resource "aws_s3_bucket_public_access_block" "logs" {
   block_public_acls       = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "logs" {
